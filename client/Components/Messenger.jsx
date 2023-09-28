@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const Messenger = (props) => {
     const { setUserSid, userSid, matchSid, setMatchSid } =props
-    const [messages, setMessages] = useState(['hi im a message', 'im anothermsg', 'yes another message'])
+    const [messages, setMessages] = useState([])
     const [text, setText] = useState('')
     const [socket, setSocket] = useState(null);
     
@@ -43,10 +43,7 @@ const Messenger = (props) => {
         const resp = await e.data;
         if (resp instanceof Blob){
         const msg = await resp.text();
-        // if (Number(msg)) {
-        //    props.setUserSid(msg)
-        //    console.log('should be ther users id', userSid)
-        // }
+        // const readymsg = msg.slice(2)
 
         console.log('MESSAGE RECIEVED BY CLEINT', msg)
         setMessages([...messages, msg])
@@ -66,7 +63,7 @@ const Messenger = (props) => {
         console.log('userSide when tryign to send', userSid)
         try {
             // sending a message using websocket
-            socket.send(`${userSid}${text}`)
+            socket.send(`${props.user.name}: ${text}`)
             setMessages([...messages, text])
 
            // await fetch();

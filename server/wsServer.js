@@ -20,6 +20,7 @@ wss.on('connection', (ws) => {
     const stringMsg = String(message)
     const partnerId = stringMsg.slice(0, 2);
     const msgToSend = stringMsg.slice(2);
+    
 
     console.log('should be the partners id', partnerId);
 
