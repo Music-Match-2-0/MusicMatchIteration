@@ -13,7 +13,7 @@ const MatchProfile = ({profileData, matchList, setMatch, matchPointer, matchIncr
 
     return (
     <div>
-        <img className='round' src='https://musicmatchiteration.s3.amazonaws.com/e29bbb317787562e47583b3c1464908758baef11920b4ece10717c67f69c5959'></img>
+        <img className='round' src={images}></img>
         <div id='profile'>
             <p>Name: {name}</p>
             <p>Age: {age}</p>
