@@ -1,74 +1,65 @@
-// webpack.config.js
-// const webpack = require("webpack");
-
-// const HtmlWebpackPlugin = require("html-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
-const { env } = require("process");
+
+// console.log("ENVIRONMENT", process.env.NODE_ENV);
 
 module.exports = {
-  mode: process.env.NODE_ENV, //read the priocess variables
-  entry: {
-    index:
-      "./client/index.js",
-  },
-
-  output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "build"),
-    //publicPath: '/' //used for base path for other assets
-  },
-
-
-  // plugins: [
-  //   new HtmlWebPackPlugin({
-  //     filename: "./index.html",
-  //   }),
-  // ],
-  // plugins: [
-  //   new HtmlWebpackPlugin({
-  //     template:
-  //       "client/index.html",
-  //   }),
-   
-  // ],
-
-  devServer: {
-    static: {
-      //publicPath: "/build/bundle/js"
-      directory: path.join(__dirname, "public"), //gives an absolute path of the resource that is going to serve
+    mode: 'development', //process.env.NODE_ENV, // NODE_ENV environment variable from package.json
+    entry: './client/index.js',
+    output: {
+        path: path.resolve(__dirname, 'build'),
+        publicPath: '/build/', //used for base path for other assets
+        filename: 'bundle.js'
     },
-    compress: true,
-    open: true,
-    hot: true,
-    port: 8080,
-    proxy: {
-      "/api": "http://localhost:3000/",
-    },
-  },
-
-  // Other webpack configuration settings
-  module: {
-    rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/react", "@babel/env"],
-          },
+    // Other webpack configuration settings
+    module: {
+        rules: [{
+                  test: /\.(js|jsx)$/,
+                  exclude: /node_modules/,
+                  use: {
+                    loader: "babel-loader",
+                    options: {
+                      presets: [ 
+                        "@babel/react", 
+                        "@babel/env"
+                      ]
+                    },
+                  },
+                },
+                {
+                  test: /\.scss$/,
+                  exclude: /node_modules/,
+                  use: [
+                    "style-loader", // 3. Inject styles into DOM
+                    "css-loader", // 2. Turns css into commonjs
+                    "sass-loader"
+                  ],
+                },
+               ],
         },
+    devServer: {
+      historyApiFallback: true,
+      static: {
+        publicPath: '/',
+        directory: path.resolve(__dirname, 'client'),
       },
-
-      {
-        test: /\.scss$/,
-        exclude: /node_modules/,
-        use: [
-          "style-loader", // 3. Inject styles into DOM
-          "css-loader", // 2. Turns css into commonjs
-          "sass-loader"
-        ],
+      hot: true,
+      host: 'localhost',
+      port: 8080,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000/',
+        },
+        // '/webs': {
+        //   target: 'ws://localhost:3001/',
+        //   ws: true
+        // },
       },
-    ],
-  },
+    },
+    plugins: [
+      new HtmlWebpackPlugin({
+        title: 'Development',
+        template: './client/index.html'
+      })
+    ]
 };

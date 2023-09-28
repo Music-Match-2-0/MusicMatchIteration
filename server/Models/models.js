@@ -1,15 +1,17 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const Schema = mongoose.Schema;
+require('dotenv').config();
 
-const MONGO_URI = "mongodb+srv://swAPP:CodesmithU10@cluster0.qzanrz5.mongodb.net/?retryWrites=true&w=majority"
+const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    dbName: 'red-lipped-batfish'
+    dbName: '65020df807624f7a95321280'
 })
     .then(() => console.log('connected to MongoDB...'))
-    .catch(err => console.log('MongoDB error: ', err))
+    .catch(err => console.error('MongoDB Error: ', err))
 
 
 const profileSchema = new Schema({
@@ -18,10 +20,38 @@ const profileSchema = new Schema({
     password: {type: String, required: true},
     age: {type: String, required: true},
     bio: {type: String, required: true},
-    artists: {type: Object, required: true},
-    images: {type: Object, required: true}
+    artists: {type: Array, required: true},
+    images: {type: Object, required: false}
 })
 
-//later: profileSchema.pre to hash password
+profileSchema.pre('save', function(next) {
+        
+        const newProfile = this;
+
+        try {
+            bcrypt.hash(newProfile.password, 10, function(err, hash) {
+                newProfile.password = hash;
+                return next();
+            })
+        }
+
+        catch(err) {
+            return next({
+                log: `Error at models.js/profileSchema.pre('save'): unknown error in bcrypt.hash try/catch block.`,
+                status: 500,
+                message: { err: `Unknown error at signup.` }
+            });
+        }
+        
+});
+
+profileSchema.methods.bcryptVerify = async function(inputPassword, controllerCallback) {
+    const thisProfile = this;
+        
+    bcrypt.compare(inputPassword, thisProfile.password, function(err, verified) {
+        if (err) return controllerCallback(err);
+        else return controllerCallback(null, verified);
+    });
+};
 
 module.exports = mongoose.model('Profile', profileSchema);

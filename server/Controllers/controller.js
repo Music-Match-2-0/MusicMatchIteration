@@ -1,155 +1,167 @@
 const Profile = require('../Models/models.js');
+const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 
 const controller = {};
 
-controller.verifyUser = async function(req, res, next){
-    try{
-        //find profile with same username 
-        const profile = await Profile.findOne({username: req.body.username});
+controller.verifyUser = async function(req, res, next) {
 
-        console.log('found profile?..', profile)
-
+    try {
         
+        const foundProfile = await Profile.findOne({username: req.body.username });
+        console.log(foundProfile)
+        if (foundProfile === null) return next({
+            log: 'At verifyUser: profile not found.',
+            status: 400,
+            message: { err: `Incorrect username or password.` }
+        }); 
 
-        //if profile not found OR incorrect password, take to signup page
-        if (profile === null || profile.password !== req.body.password){
-            return next({
-                log: 'Incorrect username or password',
-                status: 400,
-                message: { err: 'Incorrect username or password' }
+        await foundProfile.bcryptVerify(req.body.password, function(err, verified) {
+            if (err) return next({
+                log: `Error at verifyUser: uncaught error in profile.bcryptVerify: `,
+                status: 500,
+                message: { err: `Encountered unknown error at login` }
             });
-        }
-        //if everything is correct, send back the profile object
-        else{
-            res.locals.profile = profile;
-            return next();
-        }
-    } catch{
+
+            else if (verified === false) return next({
+                log: 'At verifyUser: incorrect password.',
+                status: 400,
+                message: { err: 'Incorrect username or password.' }
+            });
+            
+            else {
+                console.log('made it into bcrypt verify')
+                res.locals.profile = foundProfile;
+                return next();
+            }
+
+        });
+    }
+    
+    catch(err) {
+        
         return next({
-            log: 'Error in verifyUser middleware',
-            message: { err: 'Error in verifyUser middleware' }
-        })
-    }   
+            log: `Error at controller.verifyUser: uncaught error in try/catch block: ${err}`,
+            status: 500,
+            message: { err: `Encountered unknown error at login.` }
+        });
+
+    }
+    
 }
 
-controller.createUser = async function(req, res, next){
-    try{
-        console.log("in the createUser try block")
-        //make sure user doesn't exist in database
+controller.createUser = async function(req, res, next) {
+    
+    try {
+        
+        const { username } = req.body;
+        const { body } = req;
 
-        let { username, artist } = req.body;
-
-        console.log('input', req.body)
         const existingProfile = await Profile.findOne({username: username})
 
-        
-        //if it doesn't add user
-        if (existingProfile === null){
-            console.log('we are in existingprofile')
-            //format artists from request body
-            artist += ' ';
-            artist = artist.replaceAll('\n', ' ');
-            artist = artist.replaceAll(', ', ' ');
-            artist = artist.split(' ');
-            const artistObj = {}
-            for(const artists of artist){
-                if(artists === ' ' || artists === '') continue;
-                artistObj[artists.toLowerCase()] = true;
-            }
-    
-            const newUser = { ...req.body, artists: artistObj}
-            // console.log("creating user", newUser)
-            // console.log(req.body);
-            const newProfile = await Profile.create(newUser);
-            console.log('await new profile', newProfile)
+        if (existingProfile) return next({
+            log: 'At controller.createUser: user already exists.',
+            status: 400, 
+            message: { err: 'Username already exists.' }
+        });
+
+        try {
+            const newProfile = new Profile(body);
+            console.log(`newProfile.artists: ${newProfile.artists}`)
+            await newProfile.save();
             res.locals.profile = newProfile;
             return next();
         }
-        
-        //username already exists
-        else return next({
-            log: 'Username already exists' + err,
-            status: 400, 
-            message: { err: 'Username already exists' }
-        
 
-        })
+        catch(err) {
+            
+            return next({
+                log: 'Error at controller.createUser: uncaught error in nested try/catch block.',
+                status: 500, 
+                message: { err: 'Unknown error at signup.' }
+            });
 
-    } catch(err){
-        //global error
-        
+        }
+    } 
+
+    catch(err) {
+
         return next({
-            log: 'Error in createUser middleware function',
-            message: { err: 'Error in createUser middleware function' }
-        })
+            log: 'Error at controller.createUser: uncaught error in try/catch block.',
+            status: 500,
+            message: { err: 'Unknown error at signup.' }
+        });
 
     }
+
 }
 
 controller.createLoginCookie = function (req, res, next) {
-    // console.log('made it to create cookie');
-    // console.log(res.locals);
+    console.log('made it into cookie controoler', res.locals.profile._id)
 
-    const { _id } = res.locals.profile;
+    const { _id } = res.locals.profile
+
+    console.log('this is the id the cookie is set as')
+
+    if (_id === undefined) return next({
+        log: 'Error at controller.createLoginCookie: res.locals.profile._id is missing.',
+        status: 500,
+        message: { err: 'Encountered unknown error at login.' }
+    });
     
     res.cookie('login', _id);
-
     return next();
+
 }
 
-controller.findProfileAndMatches = async function(req, res, next){
+controller.findProfileAndMatches = async function(req, res, next) {
 
-    try{
-        console.log("in try block")
-
+    try {
         //get profile by _id which is in the cookie
         const profileId = req.cookies.login;
-        console.log("profileId", profileId);
         const profile = await Profile.findOne({_id: profileId});
-        console.log("profile", profile);
 
         //store only the info that the frontend needs in a variable
         const {username, name, age, bio, artists} = profile;
-        const userProfile = {username, name, age, bio, artists};
+        const userProfile = { username, name, age, bio, artists };
        
-        let matchesProfiles = [];
-
-        const artistsArray = artists;
-
-        console.log("artistsArray", artistsArray);
-
         //loop through artistsArray and find profiles that include these artists
-        for (const artist in artistsArray){
+        let matchesProfiles = [];
+        for (let i = 0; i < artists.length; i++) {
+            const newQuery = await Profile.find({ artists: { $all : [`${artists[i]}`] }});
+            matchesProfiles = matchesProfiles.concat(newQuery);
+        }
 
-            const newName = `artists.${artist}`;
-            const query = {};
-            query[newName] = { $exists: true };
-            
-            console.log("query", query);
-            const newMatch = await Profile.find(query);
-            console.log("newMatch", newMatch);
-           
-            matchesProfiles = matchesProfiles.concat(newMatch);
-
-        };
-
-        //remove duplicates from matchesProfiles
+        // Removes duplicates from the array of matches.
         const matchCache = {};
         const filteredMatches = [];
-        for(const match of matchesProfiles){
-            if(!matchCache.hasOwnProperty(match.username) && match.username !== username){
-                matchCache[match.username] = true;
-                filteredMatches.push(match);
+
+        for (let i = 0; i < matchesProfiles.length; i++) {
+            if(!matchCache.hasOwnProperty(matchesProfiles[i].username) && matchesProfiles[i].username !== username) {
+                matchCache[matchesProfiles[i]] = true;
+                filteredMatches.push(matchesProfiles[i]);
             }
         }
 
-        res.locals.pageinfo = {userProfile, matchesProfiles: filteredMatches}
+        function sortByShared(profileA, profileB) {
 
-        console.log("pageinfo", res.locals.pageinfo);
+            let aCounter = 0;
+            let bCounter = 0;
 
+            profileA.artists.forEach((ele) => { if (artists.includes(ele)) aCounter++; });
+            profileB.artists.forEach((ele) => { if (artists.includes(ele)) bCounter++; })
+
+            return bCounter - aCounter;
+
+        }
+
+        // Sorts matches by most shared favorites to least shared favorites.
+        filteredMatches.sort(sortByShared);
+
+        res.locals.pageinfo = { userProfile: userProfile, matchesProfiles: filteredMatches }
         return next();
-
-    }catch(err){
+    }
+    catch(err) {
         return next({
             log: 'Error in findProfileAndMatches middleware function' + err,
             message: { err: 'Error in findProfileAndMatches middleware function' }

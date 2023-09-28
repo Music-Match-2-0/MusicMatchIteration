@@ -3,6 +3,7 @@ body {
   background: linear-gradient(135deg, #87CEEB, #FFC0CB, #B0E0E6);
   background-size: 400% 400%;
   animation: gradient 10s linear infinite;
+  font-family: Geneva, Verdana, sans-serif;
 }
 
 @keyframes gradient {
@@ -260,6 +261,8 @@ input {
   box-shadow: 0px 10px 20px -10px rgba(0, 0, 0, 0.75);
   padding: 20px;
   text-align: center;
+  overflow-y: scroll;
+  
 }
 
 .left-card {
@@ -268,6 +271,16 @@ input {
 
 .right-card {
   margin-left: 10px; /* Add spacing between the cards */
+}
+
+.cardButton {
+  font-size: 1.25rem;
+  font-weight: bolder;
+  background-color: #2ecc71;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; /* Add a smooth transition */
+  margin-top: 10px;
 }
 
 
@@ -329,9 +342,6 @@ input {
   text-align: center;
   margin: 0;
   color: var(--color-primary);
-  //color: transparent;
-  //background-color: white;
-  //background-clip: text;
   animation: shadows 1.2s ease-in infinite, move 1.2s ease-in infinite;
   letter-spacing: 0.4rem;
 }
