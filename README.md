@@ -1,2 +1,2 @@
-# scratchproject
-Scratch project for Codesmith NYOI7
+# An Easy to use Music Based Dating App
+
