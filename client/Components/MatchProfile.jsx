@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 const MatchProfile = ({profileData, matchList, setMatch, matchPointer, matchIncrement}) => { // presentational component
 
+    const {name, age, bio, artists = [], images} = profileData;
     const [buttonState, updateButton] = useState(['Load new match', { backgroundColor: '#2ecc71' }]);
-
-    const {name, age, bio, artists = []} = profileData;
-
 
     function nextClick() {
         matchIncrement(matchPointer + 1);
@@ -15,7 +13,7 @@ const MatchProfile = ({profileData, matchList, setMatch, matchPointer, matchIncr
 
     return (
     <div>
-        <img className='round' src='https://png.pngtree.com/png-clipart/20220101/ourmid/pngtree-3d-apple-fruit-red-illustration-png-image_4147443.png'></img>
+        <img className='round' src={images}></img>
         <div id='profile'>
             <p>Name: {name}</p>
             <p>Age: {age}</p>

@@ -66,10 +66,34 @@ const SignUp = () => {
         setArtist('');
     }
 
-    function handleChangeImages(e) { // what even is this??
-        const fileURL = URL.createObjectURL(e.target.files[0]);
-        setnewImages(fileURL);
+function handleChangeImages(e) { // what even is this??
+        // const fileURL = URL.createObjectURL(e.target.files[0]);
+        // setnewImages(fileURL);
+
+    const formData = new FormData();
+    formData.append('image', e.target.files[0]);
+
+  // Make a request to your image upload API endpoint
+    fetch('/api/image', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(async (response) => {
+        if (response.status === 200) {
+            const responseData = await response.json();
+            const imageUrl = responseData.imageUrl; 
+
+        setnewImages(imageUrl);
+
+
+    } else {
+        console.error('Image upload failed.');
     }
+    })
+    .catch((error) => {
+        console.error('Error uploading image:', error);
+    });
+}
 
     return (
         <div className="container">
@@ -145,6 +169,9 @@ const SignUp = () => {
             name="file[]"
             onChange={handleChangeImages}
             />
+    {/* {newImages && (
+    <img src={newImages} alt="Uploaded" />
+    )} */}
         </form>
 
         <div className="input-container">

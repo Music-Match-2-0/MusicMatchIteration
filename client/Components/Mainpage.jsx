@@ -36,6 +36,10 @@ const MainPage = () => {
                 const response = await fetch('/api/userprofile');
                 const data  = await response.json();
 
+                
+                console.log(data);
+                
+
                 setUser(data.userProfile);
                 loadMatches(data.matchesProfiles);
                 setMatch(data.matchesProfiles[0])

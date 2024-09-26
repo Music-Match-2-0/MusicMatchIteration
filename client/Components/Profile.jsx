@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 
 const Profile =  ({profileData}) => { // presentational component
 
-
-    const {name, age, bio, artists = []} = profileData;
+    const {name, age, bio, artists = [], images} = profileData;
+    useEffect(()=>{
+        console.log('IMAGES', images)
+    })
 
 
     return (
     <div>    
-        <img className='round' src='https://play-lh.googleusercontent.com/TUtOJfxHm78ggM9Ssl2iAO2sDXeJ5rYauo_TTc9SiUsscHppl_TydsCwDoyZhfDv5qM'></img>
+        <img className='round' src={images} alt='Profile Image'/>
         <div id='profile'>
             <p>Name: {name}</p>
             <p>Age: {age}</p>
